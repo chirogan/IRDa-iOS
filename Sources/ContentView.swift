@@ -8,6 +8,7 @@ struct ContentView: View {
     @AppStorage(Defaults.invertCX) private var invertCX = false
     @AppStorage(Defaults.invertCY) private var invertCY = false
     @AppStorage(Defaults.deadzone) private var deadzone = 0.08
+    @AppStorage(Defaults.promptUnknown) private var promptUnknown = true
     @State private var blackout = false
     @State private var savedBrightness: CGFloat = 1
 
@@ -37,6 +38,27 @@ struct ContentView: View {
                     TouchPad().frame(height: 180)
                 }
 
+                Section("Button bindings") {
+                    Toggle("Ask when an unknown button is pressed", isOn: $promptUnknown)
+                    Button(input.learning ? "Press a button on your controller…" : "Bind a button…") {
+                        input.startLearning()
+                    }
+                    ForEach(input.bindings.sorted(by: { $0.key < $1.key }), id: \.key) { entry in
+                        HStack {
+                            Text(entry.value.name)
+                            Spacer()
+                            Text(Key(rawValue: entry.value.key)?.label ?? "?").foregroundColor(.secondary)
+                        }
+                    }
+                    .onDelete { offsets in
+                        let ids = input.bindings.sorted(by: { $0.key < $1.key }).map(\.key)
+                        for i in offsets { input.unbind(ids[i]) }
+                    }
+                    if !input.bindings.isEmpty {
+                        Button("Reset all bindings", role: .destructive) { input.resetBindings() }
+                    }
+                }
+
                 Section("Settings") {
                     Toggle("Match button labels (A=A, B=B)", isOn: $matchLabels)
                     Toggle("Invert C-Stick X", isOn: $invertCX)
@@ -60,6 +82,19 @@ struct ContentView: View {
                         blackout = false
                     }
             }
+        }
+        .confirmationDialog(
+            "Bind \"\(input.pending?.name ?? "")\" to which 3DS button?",
+            isPresented: Binding(get: { input.pending != nil },
+                                 set: { if !$0 { input.cancelPending() } }),
+            titleVisibility: .visible
+        ) {
+            if let p = input.pending {
+                ForEach(Key.allCases.filter { $0 != .touch }, id: \.self) { k in
+                    Button(k.label) { input.bind(p, to: k) }
+                }
+            }
+            Button("Ignore this button", role: .cancel) {}
         }
     }
 

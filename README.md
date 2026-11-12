@@ -17,3 +17,8 @@ Sideload with AltStore, SideStore or Sideloadly using your Apple ID (they sign i
 Pair the controller in iOS Settings -> Bluetooth, open IRDa, enter the 3DS IP, tap Connect.
 Allow "Local Network" access when asked. Keep the app in the foreground (iOS suspends it otherwise);
 "Black screen" dims the display to save battery.
+
+## Binding buttons
+Press any button that has no default role (paddles, Share, touchpad...) and IRDa asks which 3DS button
+to bind it to. "Bind a button..." lets you re-bind any button, including standard ones. Bindings are saved;
+swipe left on one in the list to remove it.

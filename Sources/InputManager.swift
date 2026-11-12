@@ -89,8 +89,14 @@ final class InputManager: ObservableObject {
             guard let c = c, let g = c.extendedGamepad else {
                 self.gamepadState = PadState(); self.publish(); return
             }
-            c.physicalInputProfile.valueChangedHandler = { [weak self] _, element in
+            g.valueChangedHandler = { [weak self] _, element in
                 self?.changed(element)
+            }
+            // Also watch every physical button (paddles, Share, touchpad...) for the binding prompt.
+            for b in c.physicalInputProfile.allButtons {
+                b.pressedChangedHandler = { [weak self] button, _, _ in
+                    self?.changed(button)
+                }
             }
             self.read(g)
         }
@@ -185,7 +191,7 @@ final class InputManager: ObservableObject {
             if button.isPressed { s.set(key, true) }
         }
         // Custom bindings (apply to any button the controller reports).
-        for button in g.physicalInputProfile.buttons.values {
+        for button in pad?.physicalInputProfile.buttons.values.map({ $0 }) ?? [] {
             if let bd = bindings[id(button)], let key = Key(rawValue: bd.key), button.isPressed {
                 s.set(key, true)
             }
